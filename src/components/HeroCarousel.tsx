@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NewsArticle } from '../types';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 interface HeroCarouselProps {
   articles: NewsArticle[];
@@ -9,24 +9,70 @@ interface HeroCarouselProps {
 
 export const HeroCarousel: React.FC<HeroCarouselProps> = ({ articles, onSelectArticle }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  // We use the top 5 most recent or important articles for the slideshow
-  const heroArticles = articles.slice(0, 5);
+  const [fetchedArticles, setFetchedArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (heroArticles.length === 0) return;
+    const fetchLiveNews = async () => {
+      setLoading(true);
+      try {
+        // Fetch Hindi News RSS using a free RSS-to-JSON service
+        const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/ndtvkhabar-latest');
+        const data = await response.json();
+        
+        if (data.status === 'ok' && data.items) {
+          const liveNews: NewsArticle[] = data.items.slice(0, 5).map((item: any) => ({
+            id: item.guid || item.link,
+            title: item.title,
+            summary: item.description,
+            content: item.content || item.description,
+            imageUrl: item.enclosure?.link || item.thumbnail || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&q=80',
+            category: 'ताज़ा ख़बरें',
+            publishedAt: item.pubDate,
+            author: item.author || 'NDTV',
+            location: 'National',
+            source: 'Live RSS Feed',
+            isTopStory: true
+          }));
+          setFetchedArticles(liveNews);
+        } else {
+          setFetchedArticles(articles.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Failed to fetch live news:", error);
+        setFetchedArticles(articles.slice(0, 5));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLiveNews();
+  }, [articles]);
+
+  const displayArticles = fetchedArticles.length > 0 ? fetchedArticles : articles.slice(0, 5);
+
+  useEffect(() => {
+    if (displayArticles.length === 0) return;
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % heroArticles.length);
+      setCurrentIndex((prev) => (prev + 1) % displayArticles.length);
     }, 5000); // 5 seconds per slide
     return () => clearInterval(timer);
-  }, [heroArticles.length]);
+  }, [displayArticles.length]);
 
-  if (heroArticles.length === 0) return null;
+  if (loading) {
+    return (
+      <div className="w-full h-[400px] sm:h-[500px] mb-8 rounded-2xl bg-gray-100 animate-pulse flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#C60000] animate-spin" />
+      </div>
+    );
+  }
 
-  const currentArticle = heroArticles[currentIndex];
+  if (displayArticles.length === 0) return null;
 
-  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % heroArticles.length);
-  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + heroArticles.length) % heroArticles.length);
+  const currentArticle = displayArticles[currentIndex];
+
+  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % displayArticles.length);
+  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + displayArticles.length) % displayArticles.length);
 
   return (
     <div className="relative w-full h-[400px] sm:h-[500px] mb-8 overflow-hidden rounded-2xl group">
@@ -70,7 +116,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ articles, onSelectAr
 
       {/* Dots */}
       <div className="absolute bottom-4 right-6 flex gap-2 z-10">
-        {heroArticles.map((_, idx) => (
+        {displayArticles.map((_, idx) => (
           <button
             key={idx}
             onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
