@@ -44,9 +44,18 @@ export const App: React.FC = () => {
   // Requirement: Admin Panel accessed via URL /admin
   useEffect(() => {
     const checkAdminPath = () => {
-      const path = window.location.pathname;
-      const hash = window.location.hash;
-      if (path === '/admin' || path.endsWith('/admin') || hash === '#admin') {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (
+        path === '/admin' ||
+        path.endsWith('/admin') ||
+        path.endsWith('/admin/') ||
+        hash === '#admin' ||
+        hash === '#/admin' ||
+        hash === '#/admin/' ||
+        search.includes('admin')
+      ) {
         setCurrentPage('admin');
       }
     };
