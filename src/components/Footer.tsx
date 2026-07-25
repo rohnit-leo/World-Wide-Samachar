@@ -142,6 +142,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Middle Section: Quick Navigation Utilities & RSS */}
         <div className="py-6 border-b border-gray-800 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex flex-wrap items-center gap-4 text-gray-400">
+            <button onClick={() => onNavigate('admin')} className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-[#C60000]" /> एडमिन सीएमएस (Admin CMS)</button>
             <button onClick={() => onNavigate('careers')} className="hover:text-white">करियर (Careers)</button>
             <button onClick={() => onNavigate('become-reporter')} className="hover:text-white">पत्रकार बनें (Become Reporter)</button>
             <button onClick={() => onNavigate('rss')} className="hover:text-white flex items-center gap-1"><Rss className="w-3.5 h-3.5 text-amber-500" /> RSS फीड</button>

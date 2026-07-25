@@ -122,14 +122,14 @@ export const Header: React.FC<HeaderProps> = ({
           <button onClick={() => onOpenAuth('register')} className="hover:text-amber-300 transition-colors cursor-pointer">
             रजिस्टर
           </button>
-          <div className="hidden md:flex gap-2 ml-2">
+          <div className="flex gap-2 ml-1 sm:ml-2">
             <button
               onClick={() => onNavigate('admin')}
-              className="bg-[#C60000] text-white text-[9px] px-2 py-0.5 rounded font-bold hover:bg-red-700 transition-colors flex items-center gap-1"
-              title="एडमिन सीएमएस (CMS)"
+              className="bg-[#C60000] text-white text-[10px] sm:text-[11px] px-2.5 py-1 rounded-md font-extrabold hover:bg-red-700 transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
+              title="एडमिन सीएमएस (CMS Panel)"
             >
-              <ShieldCheck className="w-3 h-3" />
-              <span>एडमिन</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-yellow-300" />
+              <span>एडमिन पैनल</span>
             </button>
           </div>
         </div>
@@ -302,6 +302,19 @@ export const Header: React.FC<HeaderProps> = ({
                   {cat.label}
                 </button>
               ))}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-[#E5E5E5]">
+              <button
+                onClick={() => {
+                  onNavigate('admin');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full bg-[#C60000] text-white p-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-xs text-xs"
+              >
+                <ShieldCheck className="w-4 h-4 text-yellow-300" />
+                <span>एडमिन सीएमएस पैनल (Admin Panel)</span>
+              </button>
             </div>
           </div>
         )}
