@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Header,
   NewsTicker,
+  LatestNews,
   HeroCarousel,
   ArticleCard,
   PhotoGallerySection,
@@ -404,6 +405,14 @@ export const App: React.FC = () => {
               {/* Featured Top Story Carousel on Home */}
               {activeCategory === 'होम' && (
                 <HeroCarousel
+                  articles={articles}
+                  onSelectArticle={setSelectedArticle}
+                />
+              )}
+
+              {/* Latest News Section on Home instead of Hero Carousel */}
+              {activeCategory === 'होम' && (
+                <LatestNews
                   articles={articles}
                   onSelectArticle={setSelectedArticle}
                 />

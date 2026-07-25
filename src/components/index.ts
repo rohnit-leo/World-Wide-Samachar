@@ -3,6 +3,7 @@ export { NewsTicker } from './NewsTicker';
 export { CricketStockBar } from './CricketStockBar';
 export { ArticleCard } from './ArticleCard';
 export { HeroCarousel } from './HeroCarousel';
+export { LatestNews } from './LatestNews';
 export { StateNewsSection } from './StateNewsSection';
 export { VideoSection } from './VideoSection';
 export { PhotoGallerySection } from './PhotoGallerySection';
