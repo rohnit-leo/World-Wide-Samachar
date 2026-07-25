@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Header,
   NewsTicker,
-  CricketStockBar,
   HeroCarousel,
   ArticleCard,
-  StateNewsSection,
-  VideoSection,
   PhotoGallerySection,
   OpinionSection,
   FactCheckSection,
@@ -14,23 +11,27 @@ import {
   RightSidebar,
   Footer,
   AdSenseBanner,
-  NewsDetailModal,
   LiveTVModal,
   EPaperModal,
   SubmitNewsModal,
   SearchModal,
   AuthModal,
   SEOMetadataModal,
-  LoadingScreen,
   AdminPanel,
   MandatoryPages
 } from './components/index';
 
+import { StateDistrictView } from './components/StateDistrictView';
+import { NewsDetailView } from './components/NewsDetailView';
+
 import { ALL_NEWS_ARTICLES, BREAKING_NEWS_TICKERS, INITIAL_SUBMITTED_NEWS } from './data/newsData';
-import { NewsArticle, CategoryType, ViewPage, SubmittedNews } from './types';
+import { STATES_DATA } from './data/statesData';
+import { NewsArticle, CategoryType, ViewPage, SubmittedNews, StateInfo } from './types';
+import { ChevronRight, ArrowRight, Layers } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  // Requirement 1: Open directly on home page without loading screen
+  const [isLoading, setIsLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('होम');
   const [currentPage, setCurrentPage] = useState<ViewPage>('home');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -75,6 +76,20 @@ export const App: React.FC = () => {
     return BREAKING_NEWS_TICKERS.ticker1;
   });
 
+  // Realtime States & Districts Data State
+  const [statesList, setStatesList] = useState<StateInfo[]>(() => {
+    try {
+      const saved = localStorage.getItem('wws_states_data_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading states data:', e);
+    }
+    return STATES_DATA;
+  });
+
   // Auto-Save Persistence
   useEffect(() => {
     try {
@@ -100,6 +115,14 @@ export const App: React.FC = () => {
     }
   }, [tickers]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('wws_states_data_v1', JSON.stringify(statesList));
+    } catch (e) {
+      console.error('Failed to save states data', e);
+    }
+  }, [statesList]);
+
   // Real-Time Handler Functions for Admin & User Actions
   const handleAddArticle = (newArt: NewsArticle) => {
     setArticles(prev => [newArt, ...prev]);
@@ -107,7 +130,6 @@ export const App: React.FC = () => {
 
   const handleUpdateArticle = (updatedArt: NewsArticle) => {
     setArticles(prev => prev.map(a => a.id === updatedArt.id ? updatedArt : a));
-    // If currently selected article was edited, update the detail view
     if (selectedArticle && selectedArticle.id === updatedArt.id) {
       setSelectedArticle(updatedArt);
     }
@@ -128,6 +150,7 @@ export const App: React.FC = () => {
     category: CategoryType;
     headline: string;
     description: string;
+    imageUrl?: string;
   }) => {
     const newSub: SubmittedNews = {
       id: `sub-${Date.now()}`,
@@ -152,7 +175,7 @@ export const App: React.FC = () => {
       category: submission.category,
       summary: submission.description.slice(0, 140) + '...',
       content: submission.description,
-      imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200',
+      imageUrl: submission.imageUrl || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200',
       location: submission.location,
       publishedAt: new Date().toISOString(),
       readingTimeMinutes: 2,
@@ -191,9 +214,11 @@ export const App: React.FC = () => {
       setArticles(ALL_NEWS_ARTICLES);
       setSubmittedNews(INITIAL_SUBMITTED_NEWS);
       setTickers(BREAKING_NEWS_TICKERS.ticker1);
+      setStatesList(STATES_DATA);
       localStorage.removeItem('wws_articles_v3');
       localStorage.removeItem('wws_submitted_news_v3');
       localStorage.removeItem('wws_tickers_v3');
+      localStorage.removeItem('wws_states_data_v1');
       alert('पोर्टल डिफ़ॉल्ट डेटा पर सफलतापूर्वक रीसेट कर दिया गया!');
     }
   };
@@ -207,27 +232,18 @@ export const App: React.FC = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
   const handleSelectCategory = (category: CategoryType) => {
     setActiveCategory(category);
     setCurrentPage('home');
-    window.scrollTo({ top: 300, behavior: 'smooth' });
+    setSelectedArticle(null);
+    window.scrollTo({ top: 250, behavior: 'smooth' });
   };
 
   const handleNavigatePage = (page: ViewPage) => {
     setCurrentPage(page);
+    setSelectedArticle(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
 
   // Admin CMS Full Page View
   if (currentPage === 'admin') {
@@ -245,16 +261,30 @@ export const App: React.FC = () => {
         onAddTicker={handleAddTicker}
         onDeleteTicker={handleDeleteTicker}
         onResetDefaults={handleResetDefaults}
+        statesList={statesList}
+        onUpdateStatesList={setStatesList}
       />
     );
   }
 
-  // Filter Articles based on selected navigation category
+  // Categories list for home page category-wise sections
+  const homepageCategories: CategoryType[] = [
+    'राष्ट्रीय',
+    'राजनीति',
+    'राज्य',
+    'अपराध',
+    'खेल',
+    'मनोरंजन',
+    'टेक्नोलॉजी',
+    'कृषि एवं किसान',
+    'धर्म एवं संस्कृति'
+  ];
+
+  // Filter Articles based on active category
   const filteredCategoryArticles = articles.filter((article) => {
     if (activeCategory === 'होम') return true;
     if (activeCategory === 'टॉप न्यूज़') return article.isTopStory;
     if (activeCategory === 'राज्य') return article.category === 'राज्य' || !!article.state;
-    if (activeCategory === 'वीडियो') return article.isVideo;
     if (activeCategory === 'फोटो गैलरी') return article.isPhotoGallery;
     if (activeCategory === 'राशिफल') return article.category === 'राशिफल' || article.tags.includes('राशिफल');
     return article.category === activeCategory;
@@ -262,7 +292,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#222222] font-sans antialiased selection:bg-[#C60000] selection:text-white">
-      {/* 1. MAIN HEADER & MEGA NAVIGATION */}
+      {/* 1. MAIN HEADER & NAVIGATION */}
       <Header
         activeCategory={activeCategory}
         onSelectCategory={handleSelectCategory}
@@ -272,18 +302,23 @@ export const App: React.FC = () => {
           setAuthMode(mode);
           setIsAuthOpen(true);
         }}
-        onOpenLiveTV={() => setIsLiveTVOpen(false)}
+        onOpenLiveTV={() => setIsLiveTVOpen(true)}
         onOpenEPaper={() => setIsEPaperOpen(true)}
         onOpenSubmitNews={() => setIsSubmitNewsOpen(true)}
       />
 
-      {/* 2. CONTINUOUS SCROLLING BREAKING NEWS TICKERS */}
-      <NewsTicker tickers={tickers} />
+      {/* 2. CLICKABLE BREAKING NEWS TICKER */}
+      <NewsTicker
+        tickers={tickers}
+        articles={articles}
+        onSelectArticle={(art) => {
+          setSelectedArticle(art);
+          setCurrentPage('home');
+          window.scrollTo({ top: 150, behavior: 'smooth' });
+        }}
+      />
 
-      {/* 3. CRICKET & STOCK MARKET LIVE BAR */}
-      <CricketStockBar />
-
-      {/* 4. MAIN BODY ROUTING (HOME vs MANDATORY COMPLIANCE PAGES) */}
+      {/* 3. MAIN BODY CONTENT */}
       {currentPage !== 'home' ? (
         <MandatoryPages
           currentPage={currentPage}
@@ -293,117 +328,192 @@ export const App: React.FC = () => {
       ) : (
         <main className="max-w-7xl mx-auto px-4 py-4 space-y-6">
           
-          {/* Top Leaderboard Ad Banner */}
+          {/* Header Ad Banner */}
           <AdSenseBanner type="leaderboard" />
 
-          {/* Featured Hero News Carousel */}
-          {activeCategory === 'होम' && (
-            <HeroCarousel
-              articles={articles}
-              onSelectArticle={setSelectedArticle}
-            />
-          )}
+          {/* REQUIREMENT 11 & 12: ARTICLE FULL PAGE VIEW WHEN SELECTED */}
+          {selectedArticle ? (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8">
+                <NewsDetailView
+                  article={selectedArticle}
+                  allArticles={articles}
+                  onBackToHome={() => setSelectedArticle(null)}
+                  onSelectArticle={setSelectedArticle}
+                  onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
+                />
+              </div>
 
-          {/* Main 2-Column Responsive Layout Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            {/* Left 8-Columns: Primary News Feed */}
-            <div className="lg:col-span-8 space-y-8">
-              
-              {/* Active Category Heading */}
-              {activeCategory !== 'होम' && (
-                <div className="border-b-4 border-[#C60000] pb-2 flex items-center justify-between">
-                  <h2 className="text-2xl font-bold font-heading text-gray-900 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-[#C60000] rounded-full"></span>
-                    <span>{activeCategory} की ताज़ा ख़बरें</span>
-                  </h2>
-                  <span className="text-xs text-gray-500 font-semibold">
-                    {filteredCategoryArticles.length} ख़बरें उपलब्ध
-                  </span>
-                </div>
-              )}
-
-              {/* Dynamic State & District News Selector Section */}
-              {(activeCategory === 'होम' || activeCategory === 'राज्य') && (
-                <StateNewsSection
+              <div className="lg:col-span-4">
+                <RightSidebar
+                  articles={articles}
+                  onSelectArticle={setSelectedArticle}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Featured Top Story Carousel on Home */}
+              {activeCategory === 'होम' && (
+                <HeroCarousel
                   articles={articles}
                   onSelectArticle={setSelectedArticle}
                 />
               )}
 
-              {/* Category Filtered Primary News Grid */}
-              <section className="space-y-4">
-                <div className="flex items-center justify-between border-b-2 border-gray-200 pb-2">
-                  <h3 className="text-xl font-bold font-heading text-gray-900">
-                    {activeCategory === 'होम' ? 'मुख्य राष्ट्रीय एवं प्रादेशिक समाचार' : `${activeCategory} स्पेशल`}
-                  </h3>
-                  <span className="text-xs bg-red-100 text-[#C60000] px-2.5 py-0.5 rounded font-bold">
-                    लाइव अपडेट्स
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filteredCategoryArticles.slice(0, 8).map((article) => (
-                    <ArticleCard
-                      key={article.id}
-                      article={article}
-                      onSelect={setSelectedArticle}
-                      variant="grid"
+              {/* REQUIREMENT 5 & 6: STATE -> DISTRICT -> NEWS SYSTEM VIEW */}
+              {activeCategory === 'राज्य' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-8">
+                    <StateDistrictView
+                      states={statesList}
+                      articles={articles}
+                      onSelectArticle={setSelectedArticle}
+                      onBackToHome={() => handleSelectCategory('होम')}
                     />
-                  ))}
+                  </div>
+                  <div className="lg:col-span-4">
+                    <RightSidebar
+                      articles={articles}
+                      onSelectArticle={setSelectedArticle}
+                    />
+                  </div>
                 </div>
-              </section>
+              )}
 
-              {/* In-Feed Ad Banner */}
-              <AdSenseBanner type="in-article" />
+              {/* REQUIREMENT 10: CATEGORY-WISE NEWS LAYOUT ON HOME PAGE */}
+              {activeCategory === 'होम' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* Left Column: Category-by-Category Sections */}
+                  <div className="lg:col-span-8 space-y-10">
+                    
+                    {homepageCategories.map((catName) => {
+                      const categoryArticles = articles
+                        .filter((a) => a.category === catName || (catName === 'राज्य' && a.state))
+                        .slice(0, 3); // 2 to 3 articles per category
 
-              {/* Video News Section */}
-              <VideoSection onSelectArticle={setSelectedArticle} />
+                      if (categoryArticles.length === 0) return null;
 
-              {/* Editorial & Opinion Columnists */}
-              <OpinionSection onSelectArticle={setSelectedArticle} />
+                      return (
+                        <section key={catName} className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-2xs space-y-4">
+                          {/* Category Header */}
+                          <div className="flex items-center justify-between border-b-2 border-red-600 pb-2">
+                            <h3 className="text-xl font-bold font-heading text-gray-900 flex items-center gap-2">
+                              <span className="w-3 h-3 bg-[#C60000] rounded-full"></span>
+                              <span>{catName} समाचार</span>
+                            </h3>
 
-              {/* Fact Check & Verification Section */}
-              <FactCheckSection onSelectArticle={setSelectedArticle} />
+                            {/* View All Button strictly for this category */}
+                            <button
+                              onClick={() => handleSelectCategory(catName)}
+                              className="text-xs bg-red-50 hover:bg-[#C60000] hover:text-white text-[#C60000] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>सभी खबरें देखें</span>
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
 
-              {/* Photo Gallery Section */}
-              <PhotoGallerySection onSelectArticle={setSelectedArticle} />
+                          {/* 2-3 News Articles Grid for this category */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {categoryArticles.map((art) => (
+                              <ArticleCard
+                                key={art.id}
+                                article={art}
+                                onSelect={setSelectedArticle}
+                                variant="grid"
+                              />
+                            ))}
+                          </div>
 
-              {/* Rashifal & Horoscope Interactive Cards */}
-              <HoroscopeSection />
+                          {/* Bottom "View All {Cat}" Button */}
+                          <div className="pt-2 text-center border-t border-gray-100">
+                            <button
+                              onClick={() => handleSelectCategory(catName)}
+                              className="w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 font-bold text-xs py-2 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              <span>{catName} वर्ग की सभी खबरें देखें →</span>
+                            </button>
+                          </div>
+                        </section>
+                      );
+                    })}
 
-            </div>
+                    {/* In-Feed Banner Ad */}
+                    <AdSenseBanner type="in-article" />
 
-            {/* Right 4-Columns: Sidebar Widgets */}
-            <div className="lg:col-span-4">
-              <RightSidebar
-                articles={articles}
-                onSelectArticle={setSelectedArticle}
-              />
-            </div>
+                    {/* Photo Gallery Section */}
+                    <PhotoGallerySection onSelectArticle={setSelectedArticle} />
 
-          </div>
+                    {/* Editorial & Columnists */}
+                    <OpinionSection onSelectArticle={setSelectedArticle} />
+
+                    {/* Fact Check Section */}
+                    <FactCheckSection onSelectArticle={setSelectedArticle} />
+
+                    {/* Rashifal Horoscope */}
+                    <HoroscopeSection />
+
+                  </div>
+
+                  {/* Right Column Sidebar */}
+                  <div className="lg:col-span-4">
+                    <RightSidebar
+                      articles={articles}
+                      onSelectArticle={setSelectedArticle}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* SPECIFIC SINGLE CATEGORY FILTER VIEW (When a user clicks 'View All' or Category menu) */}
+              {activeCategory !== 'होम' && activeCategory !== 'राज्य' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="border-b-4 border-[#C60000] pb-2 flex items-center justify-between">
+                      <h2 className="text-2xl font-bold font-heading text-gray-900 flex items-center gap-2">
+                        <span className="w-3 h-3 bg-[#C60000] rounded-full"></span>
+                        <span>{activeCategory} श्रेणी की सभी ख़बरें</span>
+                      </h2>
+                      <span className="text-xs text-gray-500 font-semibold">
+                        {filteredCategoryArticles.length} ख़बरें उपलब्ध
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {filteredCategoryArticles.map((art) => (
+                        <ArticleCard
+                          key={art.id}
+                          article={art}
+                          onSelect={setSelectedArticle}
+                          variant="grid"
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-4">
+                    <RightSidebar
+                      articles={articles}
+                      onSelectArticle={setSelectedArticle}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
         </main>
       )}
 
-      {/* 5. PROFESSIONAL FOOTER */}
+      {/* 4. FOOTER */}
       <Footer
         onNavigate={handleNavigatePage}
         onSelectCategory={handleSelectCategory}
         onOpenSubmitNews={() => setIsSubmitNewsOpen(true)}
       />
 
-      {/* 6. OVERLAYS & MODALS */}
-      {selectedArticle && (
-        <NewsDetailModal
-          article={selectedArticle}
-          allArticles={articles}
-          onClose={() => setSelectedArticle(null)}
-          onSelectArticle={setSelectedArticle}
-          onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
-        />
-      )}
-
+      {/* 5. OVERLAYS & MODALS */}
       {isLiveTVOpen && (
         <LiveTVModal onClose={() => setIsLiveTVOpen(false)} />
       )}
@@ -423,7 +533,10 @@ export const App: React.FC = () => {
         <SearchModal
           articles={articles}
           onClose={() => setIsSearchOpen(false)}
-          onSelectArticle={setSelectedArticle}
+          onSelectArticle={(art) => {
+            setSelectedArticle(art);
+            setIsSearchOpen(false);
+          }}
         />
       )}
 

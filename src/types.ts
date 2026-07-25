@@ -132,6 +132,7 @@ export interface SubmittedNews {
   category: CategoryType;
   headline: string;
   description: string;
+  imageUrl?: string;
   submittedAt: string;
   status: 'pending' | 'approved' | 'rejected';
 }

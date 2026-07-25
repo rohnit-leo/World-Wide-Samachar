@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, User, Newspaper, Mail, Globe, Radio, PhoneCall,
   ChevronDown, Send, Menu, X, Facebook, Twitter, Instagram,
-  Youtube, Share2, Sparkles, ShieldCheck, Flame, Tv, Sun
+  Youtube, Share2, Sparkles, ShieldCheck, Flame, Tv, Sun, MessageCircle
 } from 'lucide-react';
 import { CategoryType, ViewPage } from '../types';
 import { STATES_DATA } from '../data/statesData';
@@ -67,6 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  // List without video as video sections are completely removed
   const categoriesList: { label: CategoryType; isHighlight?: boolean }[] = [
     { label: 'होम' },
     { label: 'टॉप न्यूज़' },
@@ -88,7 +89,6 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'लाइफस्टाइल' },
     { label: 'पर्यावरण' },
     { label: 'राशिफल' },
-    { label: 'वीडियो' },
     { label: 'फोटो गैलरी' },
     { label: 'लाइव टीवी', isHighlight: true },
     { label: 'ई-पेपर', isHighlight: true }
@@ -98,16 +98,26 @@ export const Header: React.FC<HeaderProps> = ({
     <div className="w-full flex flex-col font-sans select-none">
       {/* 1. TOP UTILITY HEADER */}
       <div className="bg-[#222222] text-white text-[10px] py-1 px-4 flex justify-between items-center z-50">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <span>{currentDateHi}</span>
+          <a
+            href="https://chat.whatsapp.com/invite"
+            target="_blank"
+            rel="noreferrer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-2 py-0.5 rounded text-[10px] flex items-center gap-1 transition-colors shadow-2xs"
+            title="व्हाट्सएप ग्रुप ज्वाइन करें"
+          >
+            <MessageCircle className="w-3 h-3 fill-white" />
+            <span className="hidden sm:inline">WhatsApp ग्रुप ज्वाइन करें</span>
+            <span className="sm:hidden">WhatsApp</span>
+          </a>
           <button
             onClick={onOpenLiveTV}
-            className="flex items-center gap-1 hover:text-[#C60000] transition-colors cursor-pointer"
+            className="hidden sm:flex items-center gap-1 hover:text-[#C60000] transition-colors cursor-pointer"
           >
             <span className="w-2 h-2 bg-[#C60000] rounded-full animate-pulse"></span>
             <span>लाइव टीवी</span>
           </button>
-          <span className="hidden sm:inline-flex items-center gap-1">लखनऊ: 32°C <Sun className="w-3.5 h-3.5 text-amber-400" /></span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -168,16 +178,21 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenSubmitNews}
-            className="bg-[#C60000] hover:bg-red-700 text-white px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors shadow-sm"
+            className="bg-[#C60000] hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer"
           >
             खबर भेजें
           </button>
-          <button
-            onClick={onOpenEPaper}
-            className="border border-[#C60000] text-[#C60000] hover:bg-red-50 px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors"
+
+          <a
+            href="https://chat.whatsapp.com/invite"
+            target="_blank"
+            rel="noreferrer"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm"
           >
-            विज्ञापन
-          </button>
+            <MessageCircle className="w-4 h-4 fill-white" />
+            <span className="hidden sm:inline">WhatsApp ज्वाइन</span>
+          </a>
+
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-md bg-[#F8F9FA] border border-[#E5E5E5] text-[#222222] lg:hidden"
@@ -202,25 +217,9 @@ export const Header: React.FC<HeaderProps> = ({
                       isActive ? 'text-[#C60000] border-b-2 border-[#C60000] pb-1' : 'hover:text-[#C60000]'
                     }`}
                   >
-                    <span>राज्य</span>
+                    <span>राज्य (States & Districts)</span>
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
-
-                  <div className="absolute left-0 top-full hidden group-hover:grid grid-cols-4 gap-2 bg-white border border-[#E5E5E5] text-[#222222] p-4 rounded-b-xl shadow-xl w-[560px] z-50">
-                    <div className="col-span-4 border-b border-[#E5E5E5] pb-2 mb-2 flex items-center justify-between text-xs text-[#C60000] font-bold">
-                      <span>22 राज्य समाचार चुनें:</span>
-                      <span className="text-[10px] text-gray-500 font-normal">सभी ज़िला बुलेटिन</span>
-                    </div>
-                    {STATES_DATA.slice(0, 16).map((st) => (
-                      <button
-                        key={st.id}
-                        onClick={() => onSelectCategory('राज्य')}
-                        className="text-left text-xs px-2 py-1.5 rounded hover:bg-red-50 hover:text-[#C60000] transition-colors"
-                      >
-                        {st.nameHi}
-                      </button>
-                    ))}
-                  </div>
                 </li>
               );
             }
@@ -230,7 +229,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <li key={cat.label}>
                   <button
                     onClick={onOpenLiveTV}
-                    className="bg-[#C60000] text-white text-xs px-2.5 py-1 rounded font-bold hover:bg-red-700 transition-colors flex items-center gap-1 animate-pulse"
+                    className="bg-[#C60000] text-white text-xs px-2.5 py-1 rounded font-bold hover:bg-red-700 transition-colors flex items-center gap-1 animate-pulse cursor-pointer"
                   >
                     <Tv className="w-3.5 h-3.5" />
                     <span>लाइव टीवी</span>
@@ -244,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <li key={cat.label}>
                   <button
                     onClick={onOpenEPaper}
-                    className="border border-[#C60000] text-[#C60000] text-xs px-2.5 py-1 rounded font-bold hover:bg-red-50 transition-colors flex items-center gap-1"
+                    className="border border-[#C60000] text-[#C60000] text-xs px-2.5 py-1 rounded font-bold hover:bg-red-50 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <Newspaper className="w-3.5 h-3.5" />
                     <span>ई-पेपर</span>
