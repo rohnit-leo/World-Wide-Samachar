@@ -4,9 +4,12 @@ import { BREAKING_NEWS_TICKERS } from '../data/newsData';
 
 interface NewsTickerProps {
   onSelectHeadline?: (text: string) => void;
+  tickers?: string[];
 }
 
-export const NewsTicker: React.FC<NewsTickerProps> = ({ onSelectHeadline }) => {
+export const NewsTicker: React.FC<NewsTickerProps> = ({ onSelectHeadline, tickers }) => {
+  const displayTickers = tickers && tickers.length > 0 ? tickers : BREAKING_NEWS_TICKERS.ticker1;
+
   return (
     <div className="w-full space-y-1.5 my-2 font-sans">
       {/* Ticker 1: Red Breaking News Ticker */}
@@ -17,7 +20,7 @@ export const NewsTicker: React.FC<NewsTickerProps> = ({ onSelectHeadline }) => {
         </div>
         <div className="overflow-hidden relative w-full flex items-center h-full">
           <div className="animate-marquee flex items-center gap-12 whitespace-nowrap text-xs font-medium text-white">
-            {BREAKING_NEWS_TICKERS.ticker1.concat(BREAKING_NEWS_TICKERS.ticker1).map((item, idx) => (
+            {displayTickers.concat(displayTickers).map((item, idx) => (
               <span
                 key={idx}
                 onClick={() => onSelectHeadline && onSelectHeadline(item)}

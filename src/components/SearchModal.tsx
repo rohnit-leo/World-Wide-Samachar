@@ -7,13 +7,14 @@ import { ArticleCard } from './ArticleCard';
 interface SearchModalProps {
   onClose: () => void;
   onSelectArticle: (article: NewsArticle) => void;
+  articles?: NewsArticle[];
 }
 
-export const SearchModal: React.FC<SearchModalProps> = ({ onClose, onSelectArticle }) => {
+export const SearchModal: React.FC<SearchModalProps> = ({ onClose, onSelectArticle, articles = ALL_NEWS_ARTICLES }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const filtered = ALL_NEWS_ARTICLES.filter((article) => {
+  const filtered = articles.filter((article) => {
     const matchTerm =
       searchTerm === '' ||
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

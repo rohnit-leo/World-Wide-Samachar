@@ -647,3 +647,42 @@ export const ALL_NEWS_ARTICLES: NewsArticle[] = [
     location: 'लखनऊ'
   }
 ];
+
+export const INITIAL_SUBMITTED_NEWS = [
+  {
+    id: 'sub-101',
+    name: 'राजीव सिंह',
+    mobile: '9876543210',
+    email: 'rajeev.singh@gmail.com',
+    location: 'लखनऊ, उत्तर प्रदेश',
+    category: 'राज्य' as const,
+    headline: 'गोमती नगर में एआई आधारित ट्रैफिक सिग्नल सिस्टम शुरू',
+    description: 'लखनऊ के गोमती नगर चौराहा पर नया एआई आधारित ट्रैफिक सिग्नल सिस्टम चालू कर दिया गया है। इससे चौराहों पर जाम की स्थिति से राहत मिलने की उम्मीद है। नगर निगम और ट्रैफिक पुलिस की संयुक्त टीम निगरानी कर रही है।',
+    submittedAt: '2026-07-24 18:30',
+    status: 'pending' as const
+  },
+  {
+    id: 'sub-102',
+    name: 'अमित वर्मा',
+    mobile: '9123456789',
+    email: 'amit.v@yahoo.com',
+    location: 'वाराणसी, उत्तर प्रदेश',
+    category: 'धर्म एवं संस्कृति' as const,
+    headline: 'काशी विश्वनाथ मंदिर में सावन मेले की तैयारियां पूरी',
+    description: 'सावन माह के अवसर पर काशी विश्वनाथ धाम में श्रद्धालुओं की सुविधा के लिए विशेष बैरिकेडिंग और जर्मन हैंगर लगाए गए हैं। सुरक्षा के लिए 500 अतिरिक्त पुलिसकर्मी तैनात किए गए हैं।',
+    submittedAt: '2026-07-24 16:15',
+    status: 'pending' as const
+  },
+  {
+    id: 'sub-103',
+    name: 'सुमन मिश्रा',
+    mobile: '9988776655',
+    email: 'suman.mishra@gmail.com',
+    location: 'पटना, बिहार',
+    category: 'कृषि एवं किसान' as const,
+    headline: 'गंगा तटीय क्षेत्रों में जैविक खेती के लिए किसानों को प्रोत्साहन',
+    description: 'कृषि विभाग द्वारा जैविक खेती को बढ़ावा देने के लिए किसानों को बीज और जैविक खाद पर 50% अनुदान देने का निर्णय लिया गया है।',
+    submittedAt: '2026-07-24 12:00',
+    status: 'approved' as const
+  }
+];

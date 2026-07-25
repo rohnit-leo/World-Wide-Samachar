@@ -7,17 +7,18 @@ import { AdSenseBanner } from './AdSenseBanner';
 interface RightSidebarProps {
   onSelectArticle: (article: NewsArticle) => void;
   onTagSelect?: (tag: string) => void;
+  articles?: NewsArticle[];
 }
 
-export const RightSidebar: React.FC<RightSidebarProps> = ({ onSelectArticle, onTagSelect }) => {
+export const RightSidebar: React.FC<RightSidebarProps> = ({ onSelectArticle, onTagSelect, articles = ALL_NEWS_ARTICLES }) => {
   const [selectedCity, setSelectedCity] = useState('लखनऊ');
   const [pollState, setPollState] = useState(DAILY_POLL);
   const [votedOption, setVotedOption] = useState<number | null>(null);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
-  const trendingNews = ALL_NEWS_ARTICLES.filter((a) => a.isTrending || a.views > 30000).slice(0, 5);
-  const mostReadNews = [...ALL_NEWS_ARTICLES].sort((a, b) => b.views - a.views).slice(0, 5);
+  const trendingNews = articles.filter((a) => a.isTrending || a.views > 30000).slice(0, 5);
+  const mostReadNews = [...articles].sort((a, b) => b.views - a.views).slice(0, 5);
 
   const handleVote = (optionId: number) => {
     if (votedOption !== null) return;

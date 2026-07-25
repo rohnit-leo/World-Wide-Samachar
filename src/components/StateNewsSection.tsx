@@ -7,16 +7,17 @@ import { NewsArticle } from '../types';
 
 interface StateNewsSectionProps {
   onSelectArticle: (article: NewsArticle) => void;
+  articles?: NewsArticle[];
 }
 
-export const StateNewsSection: React.FC<StateNewsSectionProps> = ({ onSelectArticle }) => {
+export const StateNewsSection: React.FC<StateNewsSectionProps> = ({ onSelectArticle, articles = ALL_NEWS_ARTICLES }) => {
   const [selectedStateId, setSelectedStateId] = useState('up');
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
 
   const currentState = STATES_DATA.find((s) => s.id === selectedStateId) || STATES_DATA[0];
 
   // Filter news by state and optional district
-  const filteredArticles = ALL_NEWS_ARTICLES.filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     if (article.state) {
       const matchState = article.state.toLowerCase().includes(currentState.nameHi.toLowerCase());
       if (!matchState) return false;
@@ -25,11 +26,16 @@ export const StateNewsSection: React.FC<StateNewsSectionProps> = ({ onSelectArti
       }
       return true;
     }
+    // Also check location matching state name
+    if (article.location) {
+      const matchLocation = article.location.toLowerCase().includes(currentState.nameHi.toLowerCase());
+      if (matchLocation) return true;
+    }
     return false;
   });
 
-  // Fallback to general state news if filtered list is small
-  const displayArticles = filteredArticles.length > 0 ? filteredArticles : ALL_NEWS_ARTICLES.slice(0, 4);
+  // Fallback to general state news or category news if filtered list is small
+  const displayArticles = filteredArticles.length > 0 ? filteredArticles : articles.filter(a => a.category === 'राज्य' || a.category === 'टॉप न्यूज़').slice(0, 4);
 
   return (
     <section className="my-8 bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">

@@ -26,14 +26,177 @@ import {
   MandatoryPages
 } from './components/index';
 
-import { ALL_NEWS_ARTICLES } from './data/newsData';
-import { NewsArticle, CategoryType, ViewPage } from './types';
+import { ALL_NEWS_ARTICLES, BREAKING_NEWS_TICKERS, INITIAL_SUBMITTED_NEWS } from './data/newsData';
+import { NewsArticle, CategoryType, ViewPage, SubmittedNews } from './types';
 
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('होम');
   const [currentPage, setCurrentPage] = useState<ViewPage>('home');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+
+  // Dynamic Global Realtime Data State
+  const [articles, setArticles] = useState<NewsArticle[]>(() => {
+    try {
+      const saved = localStorage.getItem('wws_articles_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading articles from storage:', e);
+    }
+    return ALL_NEWS_ARTICLES;
+  });
+
+  const [submittedNews, setSubmittedNews] = useState<SubmittedNews[]>(() => {
+    try {
+      const saved = localStorage.getItem('wws_submitted_news_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading submitted news from storage:', e);
+    }
+    return INITIAL_SUBMITTED_NEWS;
+  });
+
+  const [tickers, setTickers] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('wws_tickers_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading tickers from storage:', e);
+    }
+    return BREAKING_NEWS_TICKERS.ticker1;
+  });
+
+  // Auto-Save Persistence
+  useEffect(() => {
+    try {
+      localStorage.setItem('wws_articles_v3', JSON.stringify(articles));
+    } catch (e) {
+      console.error('Failed to save articles', e);
+    }
+  }, [articles]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('wws_submitted_news_v3', JSON.stringify(submittedNews));
+    } catch (e) {
+      console.error('Failed to save submitted news', e);
+    }
+  }, [submittedNews]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('wws_tickers_v3', JSON.stringify(tickers));
+    } catch (e) {
+      console.error('Failed to save tickers', e);
+    }
+  }, [tickers]);
+
+  // Real-Time Handler Functions for Admin & User Actions
+  const handleAddArticle = (newArt: NewsArticle) => {
+    setArticles(prev => [newArt, ...prev]);
+  };
+
+  const handleUpdateArticle = (updatedArt: NewsArticle) => {
+    setArticles(prev => prev.map(a => a.id === updatedArt.id ? updatedArt : a));
+    // If currently selected article was edited, update the detail view
+    if (selectedArticle && selectedArticle.id === updatedArt.id) {
+      setSelectedArticle(updatedArt);
+    }
+  };
+
+  const handleDeleteArticle = (id: string) => {
+    setArticles(prev => prev.filter(a => a.id !== id));
+    if (selectedArticle && selectedArticle.id === id) {
+      setSelectedArticle(null);
+    }
+  };
+
+  const handleSubmitUserNews = (submissionData: {
+    name: string;
+    mobile: string;
+    email?: string;
+    location: string;
+    category: CategoryType;
+    headline: string;
+    description: string;
+  }) => {
+    const newSub: SubmittedNews = {
+      id: `sub-${Date.now()}`,
+      name: submissionData.name,
+      mobile: submissionData.mobile,
+      email: submissionData.email,
+      location: submissionData.location,
+      category: submissionData.category,
+      headline: submissionData.headline,
+      description: submissionData.description,
+      submittedAt: new Date().toLocaleString('hi-IN'),
+      status: 'pending'
+    };
+    setSubmittedNews(prev => [newSub, ...prev]);
+  };
+
+  const handleApproveSubmission = (submission: SubmittedNews) => {
+    const newArt: NewsArticle = {
+      id: `art-sub-${Date.now()}`,
+      title: submission.headline,
+      subtitle: `नागरिक पत्रकार रिपोर्ट (${submission.location})`,
+      category: submission.category,
+      summary: submission.description.slice(0, 140) + '...',
+      content: submission.description,
+      imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200',
+      location: submission.location,
+      publishedAt: new Date().toISOString(),
+      readingTimeMinutes: 2,
+      views: 1,
+      likes: 0,
+      commentsCount: 0,
+      isBreaking: true,
+      isTopStory: true,
+      author: {
+        id: `auth-${submission.id}`,
+        name: `${submission.name} (सिटीजन रिपोर्टर)`,
+        role: 'नागरिक रिपोर्टर',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'
+      },
+      tags: [submission.category, submission.location, 'यूज़र रिपोर्ट']
+    };
+
+    setArticles(prev => [newArt, ...prev]);
+    setSubmittedNews(prev => prev.map(item => item.id === submission.id ? { ...item, status: 'approved' } : item));
+  };
+
+  const handleRejectSubmission = (id: string) => {
+    setSubmittedNews(prev => prev.map(item => item.id === id ? { ...item, status: 'rejected' } : item));
+  };
+
+  const handleAddTicker = (text: string) => {
+    setTickers(prev => [text, ...prev]);
+  };
+
+  const handleDeleteTicker = (index: number) => {
+    setTickers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleResetDefaults = () => {
+    if (confirm('क्या आप निश्चित रूप से पोर्टल का पूरा डेटा डिफ़ॉल्ट स्थिति में रीसेट करना चाहते हैं?')) {
+      setArticles(ALL_NEWS_ARTICLES);
+      setSubmittedNews(INITIAL_SUBMITTED_NEWS);
+      setTickers(BREAKING_NEWS_TICKERS.ticker1);
+      localStorage.removeItem('wws_articles_v3');
+      localStorage.removeItem('wws_submitted_news_v3');
+      localStorage.removeItem('wws_tickers_v3');
+      alert('पोर्टल डिफ़ॉल्ट डेटा पर सफलतापूर्वक रीसेट कर दिया गया!');
+    }
+  };
 
   // Modals state
   const [isLiveTVOpen, setIsLiveTVOpen] = useState(false);
@@ -68,11 +231,26 @@ export const App: React.FC = () => {
 
   // Admin CMS Full Page View
   if (currentPage === 'admin') {
-    return <AdminPanel onBackToPortal={() => setCurrentPage('home')} />;
+    return (
+      <AdminPanel
+        onBackToPortal={() => setCurrentPage('home')}
+        articlesList={articles}
+        onAddArticle={handleAddArticle}
+        onUpdateArticle={handleUpdateArticle}
+        onDeleteArticle={handleDeleteArticle}
+        submittedList={submittedNews}
+        onApproveSubmission={handleApproveSubmission}
+        onRejectSubmission={handleRejectSubmission}
+        tickerList={tickers}
+        onAddTicker={handleAddTicker}
+        onDeleteTicker={handleDeleteTicker}
+        onResetDefaults={handleResetDefaults}
+      />
+    );
   }
 
   // Filter Articles based on selected navigation category
-  const filteredCategoryArticles = ALL_NEWS_ARTICLES.filter((article) => {
+  const filteredCategoryArticles = articles.filter((article) => {
     if (activeCategory === 'होम') return true;
     if (activeCategory === 'टॉप न्यूज़') return article.isTopStory;
     if (activeCategory === 'राज्य') return article.category === 'राज्य' || !!article.state;
@@ -94,13 +272,13 @@ export const App: React.FC = () => {
           setAuthMode(mode);
           setIsAuthOpen(true);
         }}
-        onOpenLiveTV={() => setIsLiveTVOpen(true)}
+        onOpenLiveTV={() => setIsLiveTVOpen(false)}
         onOpenEPaper={() => setIsEPaperOpen(true)}
         onOpenSubmitNews={() => setIsSubmitNewsOpen(true)}
       />
 
       {/* 2. CONTINUOUS SCROLLING BREAKING NEWS TICKERS */}
-      <NewsTicker onSelectArticle={setSelectedArticle} />
+      <NewsTicker tickers={tickers} />
 
       {/* 3. CRICKET & STOCK MARKET LIVE BAR */}
       <CricketStockBar />
@@ -121,7 +299,7 @@ export const App: React.FC = () => {
           {/* Featured Hero News Carousel */}
           {activeCategory === 'होम' && (
             <HeroCarousel
-              articles={ALL_NEWS_ARTICLES}
+              articles={articles}
               onSelectArticle={setSelectedArticle}
             />
           )}
@@ -147,7 +325,10 @@ export const App: React.FC = () => {
 
               {/* Dynamic State & District News Selector Section */}
               {(activeCategory === 'होम' || activeCategory === 'राज्य') && (
-                <StateNewsSection onSelectArticle={setSelectedArticle} />
+                <StateNewsSection
+                  articles={articles}
+                  onSelectArticle={setSelectedArticle}
+                />
               )}
 
               {/* Category Filtered Primary News Grid */}
@@ -195,7 +376,10 @@ export const App: React.FC = () => {
 
             {/* Right 4-Columns: Sidebar Widgets */}
             <div className="lg:col-span-4">
-              <RightSidebar onSelectArticle={setSelectedArticle} />
+              <RightSidebar
+                articles={articles}
+                onSelectArticle={setSelectedArticle}
+              />
             </div>
 
           </div>
@@ -213,7 +397,7 @@ export const App: React.FC = () => {
       {selectedArticle && (
         <NewsDetailModal
           article={selectedArticle}
-          allArticles={ALL_NEWS_ARTICLES}
+          allArticles={articles}
           onClose={() => setSelectedArticle(null)}
           onSelectArticle={setSelectedArticle}
           onOpenSchemaModal={() => setIsSchemaModalOpen(true)}
@@ -229,11 +413,15 @@ export const App: React.FC = () => {
       )}
 
       {isSubmitNewsOpen && (
-        <SubmitNewsModal onClose={() => setIsSubmitNewsOpen(false)} />
+        <SubmitNewsModal
+          onClose={() => setIsSubmitNewsOpen(false)}
+          onSubmitNews={handleSubmitUserNews}
+        />
       )}
 
       {isSearchOpen && (
         <SearchModal
+          articles={articles}
           onClose={() => setIsSearchOpen(false)}
           onSelectArticle={setSelectedArticle}
         />

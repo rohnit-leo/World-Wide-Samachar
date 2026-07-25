@@ -3,9 +3,10 @@ import { X, Send, Upload, CheckCircle2, Image as ImageIcon, Film, MapPin } from 
 
 interface SubmitNewsModalProps {
   onClose: () => void;
+  onSubmitNews?: (submissionData: any) => void;
 }
 
-export const SubmitNewsModal: React.FC<SubmitNewsModalProps> = ({ onClose }) => {
+export const SubmitNewsModal: React.FC<SubmitNewsModalProps> = ({ onClose, onSubmitNews }) => {
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -19,6 +20,9 @@ export const SubmitNewsModal: React.FC<SubmitNewsModalProps> = ({ onClose }) => 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (onSubmitNews) {
+      onSubmitNews(formData);
+    }
     setSubmitted(true);
   };
 

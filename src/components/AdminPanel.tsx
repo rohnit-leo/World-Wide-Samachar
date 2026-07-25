@@ -9,52 +9,34 @@ import { NewsArticle, CategoryType, SubmittedNews } from '../types';
 
 interface AdminPanelProps {
   onBackToPortal: () => void;
+  articlesList?: NewsArticle[];
+  onAddArticle?: (article: NewsArticle) => void;
+  onUpdateArticle?: (article: NewsArticle) => void;
+  onDeleteArticle?: (id: string) => void;
+  submittedList?: SubmittedNews[];
+  onApproveSubmission?: (submission: SubmittedNews) => void;
+  onRejectSubmission?: (id: string) => void;
+  tickerList?: string[];
+  onAddTicker?: (text: string) => void;
+  onDeleteTicker?: (index: number) => void;
+  onResetDefaults?: () => void;
 }
 
-const INITIAL_SUBMITTED_NEWS: SubmittedNews[] = [
-  {
-    id: 'sub-101',
-    name: 'राजीव सिंह',
-    mobile: '9876543210',
-    email: 'rajeev.singh@gmail.com',
-    location: 'लखनऊ, उत्तर प्रदेश',
-    category: 'राज्य',
-    headline: 'गोमती नगर में एआई आधारित ट्रैफिक सिग्नल सिस्टम शुरू',
-    description: 'लखनऊ के गोमती नगर चौराहा पर नया एआई आधारित ट्रैफिक सिग्नल सिस्टम चालू कर दिया गया है। इससे चौराहों पर जाम की स्थिति से राहत मिलने की उम्मीद है। नगर निगम और ट्रैफिक पुलिस की संयुक्त टीम निगरानी कर रही है।',
-    submittedAt: '2026-07-24 18:30',
-    status: 'pending'
-  },
-  {
-    id: 'sub-102',
-    name: 'अमित वर्मा',
-    mobile: '9123456789',
-    email: 'amit.v@yahoo.com',
-    location: 'वाराणसी, उत्तर प्रदेश',
-    category: 'धर्म एवं संस्कृति',
-    headline: 'काशी विश्वनाथ मंदिर में सावन मेले की तैयारियां पूरी',
-    description: 'सावन माह के अवसर पर काशी विश्वनाथ धाम में श्रद्धालुओं की सुविधा के लिए विशेष बैरिकेडिंग और जर्मन हैंगर लगाए गए हैं। सुरक्षा के लिए 500 अतिरिक्त पुलिसकर्मी तैनात किए गए हैं।',
-    submittedAt: '2026-07-24 16:15',
-    status: 'pending'
-  },
-  {
-    id: 'sub-103',
-    name: 'सुमन मिश्रा',
-    mobile: '9988776655',
-    email: 'suman.mishra@gmail.com',
-    location: 'पटना, बिहार',
-    category: 'कृषि एवं किसान',
-    headline: 'गंगा तटीय क्षेत्रों में जैविक खेती के लिए किसानों को प्रोत्साहन',
-    description: 'कृषि विभाग द्वारा जैविक खेती को बढ़ावा देने के लिए किसानों को बीज और जैविक खाद पर 50% अनुदान देने का निर्णय लिया गया है।',
-    submittedAt: '2026-07-24 12:00',
-    status: 'approved'
-  }
-];
-
-export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({
+  onBackToPortal,
+  articlesList = ALL_NEWS_ARTICLES,
+  onAddArticle,
+  onUpdateArticle,
+  onDeleteArticle,
+  submittedList = INITIAL_SUBMITTED_NEWS,
+  onApproveSubmission,
+  onRejectSubmission,
+  tickerList = BREAKING_NEWS_TICKERS.ticker1,
+  onAddTicker,
+  onDeleteTicker,
+  onResetDefaults
+}) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'articles' | 'add_edit' | 'submitted' | 'tickers' | 'adsense'>('overview');
-  const [articlesList, setArticlesList] = useState<NewsArticle[]>(ALL_NEWS_ARTICLES);
-  const [submittedList, setSubmittedList] = useState<SubmittedNews[]>(INITIAL_SUBMITTED_NEWS);
-  const [tickerList, setTickerList] = useState<string[]>(BREAKING_NEWS_TICKERS.ticker1);
   const [newTickerText, setNewTickerText] = useState('');
   
   // Search & Filter State in Article List
@@ -120,29 +102,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
 
     if (editingArticleId) {
       // UPDATE EXISTING ARTICLE
-      setArticlesList(prev => prev.map(art => {
-        if (art.id === editingArticleId) {
-          return {
-            ...art,
-            title: articleForm.title,
-            subtitle: articleForm.subtitle,
-            category: articleForm.category,
-            summary: articleForm.summary,
-            content: articleForm.content,
-            imageUrl: articleForm.imageUrl,
-            location: articleForm.location,
-            isBreaking: articleForm.isBreaking,
-            isTopStory: articleForm.isTopStory,
-            author: {
-              ...art.author,
-              name: articleForm.authorName,
-              role: articleForm.authorRole
-            }
-          };
+      const target = articlesList.find(a => a.id === editingArticleId);
+      const updated: NewsArticle = {
+        ...target!,
+        title: articleForm.title,
+        subtitle: articleForm.subtitle,
+        category: articleForm.category,
+        summary: articleForm.summary,
+        content: articleForm.content,
+        imageUrl: articleForm.imageUrl,
+        location: articleForm.location,
+        isBreaking: articleForm.isBreaking,
+        isTopStory: articleForm.isTopStory,
+        author: {
+          ...target!.author,
+          name: articleForm.authorName,
+          role: articleForm.authorRole
         }
-        return art;
-      }));
-      alert('खबर का विवरण सफलतापूर्वक अपडेट कर दिया गया!');
+      };
+      if (onUpdateArticle) {
+        onUpdateArticle(updated);
+      }
+      alert('खबर का विवरण सफलतापूर्वक लाइव अपडेट कर दिया गया!');
     } else {
       // CREATE NEW ARTICLE
       const created: NewsArticle = {
@@ -169,8 +150,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
         },
         tags: [articleForm.category, articleForm.location, 'वर्ल्ड वाइड न्यूज़']
       };
-      setArticlesList([created, ...articlesList]);
-      alert('नई खबर सफलतापूर्वक प्रकाशित हुई!');
+      if (onAddArticle) {
+        onAddArticle(created);
+      }
+      alert('नई खबर सफलतापूर्वक प्रकाशित हुई और लाइव पोर्टल पर जोड़ दी गई!');
     }
 
     resetForm();
@@ -179,52 +162,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
 
   const handleDeleteArticle = (id: string) => {
     if (confirm('क्या आप निश्चित रूप से इस खबर को हटाना चाहते हैं?')) {
-      setArticlesList(prev => prev.filter((a) => a.id !== id));
+      if (onDeleteArticle) {
+        onDeleteArticle(id);
+      }
     }
   };
 
-  const handleApproveSubmission = (submission: SubmittedNews) => {
-    // 1. Create a live article from submitted news
-    const newArt: NewsArticle = {
-      id: `art-sub-${Date.now()}`,
-      title: submission.headline,
-      subtitle: `नागरिक पत्रकार रिपोर्ट (${submission.location})`,
-      category: submission.category,
-      summary: submission.description.slice(0, 140) + '...',
-      content: submission.description,
-      imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200',
-      location: submission.location,
-      publishedAt: new Date().toISOString(),
-      readingTimeMinutes: 2,
-      views: 1,
-      likes: 0,
-      commentsCount: 0,
-      isBreaking: false,
-      isTopStory: false,
-      author: {
-        id: `auth-${submission.id}`,
-        name: `${submission.name} (सिटीजन रिपोर्टर)`,
-        role: 'नागरिक रिपोर्टर',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'
-      },
-      tags: [submission.category, submission.location, 'यूज़र रिपोर्ट']
-    };
-
-    setArticlesList([newArt, ...articlesList]);
-
-    // 2. Mark submission as approved
-    setSubmittedList(prev => prev.map(item => item.id === submission.id ? { ...item, status: 'approved' } : item));
-    alert(`"${submission.headline}" को स्वीकृत करके मुख्य पोर्टल पर प्रकाशित कर दिया गया है!`);
+  const handleApproveSubmissionClick = (submission: SubmittedNews) => {
+    if (onApproveSubmission) {
+      onApproveSubmission(submission);
+      alert(`"${submission.headline}" को स्वीकृत करके मुख्य पोर्टल पर लाइव प्रकाशित कर दिया गया है!`);
+    }
   };
 
-  const handleRejectSubmission = (id: string) => {
-    setSubmittedList(prev => prev.map(item => item.id === id ? { ...item, status: 'rejected' } : item));
+  const handleRejectSubmissionClick = (id: string) => {
+    if (onRejectSubmission) {
+      onRejectSubmission(id);
+    }
   };
 
-  const handleAddTicker = (e: React.FormEvent) => {
+  const handleAddTickerForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTickerText.trim()) return;
-    setTickerList([newTickerText, ...tickerList]);
+    if (onAddTicker) {
+      onAddTicker(newTickerText.trim());
+    }
     setNewTickerText('');
   };
 
@@ -361,11 +323,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
           {/* 1. OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <div className="flex flex-wrap justify-between items-center border-b border-slate-800 pb-3 gap-2">
                 <h2 className="text-xl font-bold font-heading text-white">
                   संपादकीय विश्लेषिकी व स्थिति (Editorial Dashboard)
                 </h2>
-                <span className="text-xs text-emerald-400 font-mono font-bold">● पोर्टल एक्टिव</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-emerald-400 font-mono font-bold">● पोर्टल एक्टिव</span>
+                  {onResetDefaults && (
+                    <button
+                      onClick={onResetDefaults}
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded flex items-center gap-1 font-medium transition-colors"
+                      title="डिफ़ॉल्ट स्थिति में रीसेट करें"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                      <span>डिफ़ॉल्ट डेटा रीसेट</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
@@ -755,14 +729,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
                       {item.status === 'pending' && (
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleApproveSubmission(item)}
+                            onClick={() => handleApproveSubmissionClick(item)}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>स्वीकृत व प्रकाशित करें</span>
                           </button>
                           <button
-                            onClick={() => handleRejectSubmission(item.id)}
+                            onClick={() => handleRejectSubmissionClick(item.id)}
                             className="bg-red-950 hover:bg-red-900 text-red-400 border border-red-800 font-bold px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -784,7 +758,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
                 ब्रेकिंग न्यूज़ टिकर प्रबंधक
               </h2>
 
-              <form onSubmit={handleAddTicker} className="flex gap-2">
+              <form onSubmit={handleAddTickerForm} className="flex gap-2">
                 <input
                   type="text"
                   value={newTickerText}
@@ -802,8 +776,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToPortal }) => {
                   <div key={idx} className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
                     <span className="text-slate-200">★ {t}</span>
                     <button
-                      onClick={() => setTickerList(tickerList.filter((_, i) => i !== idx))}
-                      className="text-red-400 hover:text-red-300 p-1"
+                      onClick={() => onDeleteTicker && onDeleteTicker(idx)}
+                      className="text-red-400 hover:text-red-300 p-1 font-bold"
                     >
                       हटाएं
                     </button>
