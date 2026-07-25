@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, User, Newspaper, Mail, Globe, Radio, PhoneCall,
   ChevronDown, Send, Menu, X, Facebook, Twitter, Instagram,
-  Youtube, Share2, Sparkles, ShieldCheck, Flame, Tv
+  Youtube, Share2, Sparkles, ShieldCheck, Flame, Tv, Sun
 } from 'lucide-react';
 import { CategoryType, ViewPage } from '../types';
 import { STATES_DATA } from '../data/statesData';
@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="w-2 h-2 bg-[#C60000] rounded-full animate-pulse"></span>
             <span>लाइव टीवी</span>
           </button>
-          <span className="hidden sm:inline-flex items-center gap-1">लखनऊ: 32°C ☀️</span>
+          <span className="hidden sm:inline-flex items-center gap-1">लखनऊ: 32°C <Sun className="w-3.5 h-3.5 text-amber-400" /></span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -158,9 +158,9 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenSearch}
-              className="absolute right-4 text-gray-400 font-bold hover:text-[#C60000] transition-colors"
+              className="absolute right-4 text-gray-400 hover:text-[#C60000] transition-colors"
             >
-              🔍
+              <Search className="w-4 h-4" />
             </button>
           </form>
         </div>
@@ -278,8 +278,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full border border-[#E5E5E5] rounded-full py-1.5 px-4 text-xs bg-[#F8F9FA] text-[#222222] outline-none"
               />
-              <button onClick={onOpenSearch} className="absolute right-3 top-1.5 text-gray-400">
-                🔍
+              <button onClick={onOpenSearch} className="absolute right-3 top-2 text-gray-400">
+                <Search className="w-4 h-4" />
               </button>
             </div>
 

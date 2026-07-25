@@ -251,7 +251,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             <span>•</span>
             <span className="flex items-center gap-1">
               <Eye className="w-3 h-3" />
-              👁️ {article.views}
+              <span>{article.views}</span>
             </span>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Eye, Clock, User, Flame, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Clock, User, Flame, ArrowRight, MapPin } from 'lucide-react';
 import { NewsArticle } from '../types';
 
 interface HeroCarouselProps {
@@ -60,8 +60,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ articles, onSelectAr
             </span>
           )}
           {current.location && (
-            <span className="bg-black/60 text-gray-200 backdrop-blur-xs text-[10px] px-2 py-0.5 rounded border border-white/20">
-              📍 {current.location}
+            <span className="bg-black/60 text-gray-200 backdrop-blur-xs text-[10px] px-2 py-0.5 rounded border border-white/20 inline-flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-red-400" />
+              <span>{current.location}</span>
             </span>
           )}
         </div>
@@ -76,7 +77,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ articles, onSelectAr
             <span>|</span>
             <span className="flex items-center gap-1">
               <Eye className="w-3.5 h-3.5 text-gray-300" />
-              👁️ {current.views.toLocaleString('hi-IN')}
+              <span>{current.views.toLocaleString('hi-IN')}</span>
             </span>
             <span>|</span>
             <span className="flex items-center gap-1">
