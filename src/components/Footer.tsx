@@ -135,10 +135,9 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
-        {/* Middle Section: Quick Navigation Utilities & Social Links */}
+        {/* Middle Section: Quick Navigation Utilities & WhatsApp Group Join */}
         <div className="py-6 border-b border-gray-800 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex flex-wrap items-center gap-4 text-gray-400">
-            <button onClick={() => onNavigate('admin')} className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"><ShieldCheck className="w-3.5 h-3.5 text-[#C60000]" /> एडमिन सीएमएस (Admin CMS)</button>
             <button onClick={() => onNavigate('careers')} className="hover:text-white">करियर (Careers)</button>
             <button onClick={() => onNavigate('become-reporter')} className="hover:text-white">पत्रकार बनें (Become Reporter)</button>
             <button onClick={() => onNavigate('rss')} className="hover:text-white flex items-center gap-1"><Rss className="w-3.5 h-3.5 text-amber-500" /> RSS फीड</button>
@@ -148,24 +147,16 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-gray-400 text-[11px]">सोशल मीडिया:</span>
-            <div className="flex items-center gap-2">
-              <a href="https://chat.whatsapp.com/invite" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition-colors shadow" title="WhatsApp Group Join">
-                <MessageCircle className="w-4 h-4 fill-white" />
-              </a>
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-gray-800 hover:bg-blue-600 text-white flex items-center justify-center transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-gray-800 hover:bg-sky-500 text-white flex items-center justify-center transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-gray-800 hover:bg-pink-600 text-white flex items-center justify-center transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-gray-800 hover:bg-red-600 text-white flex items-center justify-center transition-colors">
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
+            <a
+              href="https://chat.whatsapp.com/invite"
+              target="_blank"
+              rel="noreferrer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-950/60 hover:scale-105 border border-emerald-400"
+              title="जॉइन व्हाट्सएप ग्रुप"
+            >
+              <MessageCircle className="w-4 h-4 fill-white" />
+              <span>जॉइन व्हाट्सएप ग्रुप</span>
+            </a>
           </div>
         </div>
 

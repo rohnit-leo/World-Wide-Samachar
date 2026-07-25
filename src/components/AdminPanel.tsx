@@ -14,6 +14,7 @@ interface AdminPanelProps {
   articlesList?: NewsArticle[];
   onAddArticle?: (article: NewsArticle) => void;
   onUpdateArticle?: (article: NewsArticle) => void;
+  onUpdateArticlesList?: (articles: NewsArticle[]) => void;
   onDeleteArticle?: (id: string) => void;
   submittedList?: SubmittedNews[];
   onApproveSubmission?: (submission: SubmittedNews) => void;
@@ -40,9 +41,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onDeleteTicker,
   onResetDefaults,
   statesList = STATES_DATA,
-  onUpdateStatesList
+  onUpdateStatesList,
+  onUpdateArticlesList
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'articles' | 'add_edit' | 'submitted' | 'tickers' | 'states' | 'adsense'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'articles' | 'add_edit' | 'carousel' | 'submitted' | 'tickers' | 'states' | 'adsense'>('overview');
   const [newTickerText, setNewTickerText] = useState('');
   
   // Search & Filter State in Article List
@@ -371,6 +373,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <Plus className="w-4 h-4" />
               <span>{editingArticleId ? 'खबर संपादित करें' : 'नई खबर लिखें'}</span>
             </div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('carousel')}
+            className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-colors cursor-pointer ${
+              activeTab === 'carousel' ? 'bg-[#C60000] text-white font-bold' : 'bg-slate-900 hover:bg-slate-800 text-slate-300'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <ImageIcon className="w-4 h-4 text-purple-400" />
+              <span>स्लाइडशो / टॉप स्टोरीज़ प्रबंधक</span>
+            </div>
+            <span className="bg-purple-950 text-purple-300 px-2 py-0.5 rounded-full text-[10px] font-mono border border-purple-800">
+              {articlesList.filter(a => a.isTopStory || (a.slideshowOrder !== undefined && a.slideshowOrder > 0)).length}
+            </span>
           </button>
 
           <button
@@ -829,6 +846,182 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <span>{editingArticleId ? 'खबर अपडेट करें' : 'खबर तुरंत प्रकाशित करें'}</span>
               </button>
             </form>
+          )}
+
+          {/* SLIDESHOW & HERO CAROUSEL MANAGER TAB */}
+          {activeTab === 'carousel' && (
+            <div className="space-y-6 text-xs">
+              <div className="border-b border-slate-800 pb-3 flex flex-wrap justify-between items-center gap-2">
+                <div>
+                  <h2 className="text-xl font-bold font-heading text-white flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-purple-400" />
+                    <span>होम पेज स्लाइडशो एवं फोटो अनुक्रम प्रबंधक</span>
+                  </h2>
+                  <p className="text-slate-400 mt-1">
+                    यहाँ से आप होम पेज के सबसे ऊपरी स्लाइडशो की तस्वीरों को बदल सकते हैं, उनका क्रम (Sequence) ऊपर/नीचे कर सकते हैं, तथा स्लाइडशो में नई ख़बरें जोड़ या हटा सकते हैं।
+                  </p>
+                </div>
+                <span className="bg-purple-950 text-purple-300 border border-purple-800 px-3 py-1 rounded-lg font-bold font-mono text-xs">
+                  {articlesList.filter(a => a.isTopStory || (a.slideshowOrder !== undefined && a.slideshowOrder > 0)).length} स्लाइड सक्रिय
+                </span>
+              </div>
+
+              {/* Active Slideshow Items List */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                  <span>वर्तमान स्लाइडशो क्रम (Active Slides Sequence):</span>
+                </h3>
+
+                {articlesList
+                  .filter(a => a.isTopStory || (a.slideshowOrder !== undefined && a.slideshowOrder > 0))
+                  .sort((a, b) => {
+                    const orderA = a.slideshowOrder !== undefined && a.slideshowOrder > 0 ? a.slideshowOrder : 9999;
+                    const orderB = b.slideshowOrder !== undefined && b.slideshowOrder > 0 ? b.slideshowOrder : 9999;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+                  })
+                  .map((art, idx, arr) => (
+                    <div
+                      key={art.id}
+                      className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-[200px] flex-1">
+                          <span className="w-7 h-7 rounded-lg bg-purple-900 text-purple-200 font-extrabold text-xs flex items-center justify-center shrink-0 border border-purple-700">
+                            #{idx + 1}
+                          </span>
+                          <img src={art.imageUrl} alt="" className="w-16 h-12 rounded-lg object-cover shrink-0 border border-slate-700" />
+                          <div className="truncate space-y-0.5">
+                            <h4 className="font-bold text-white text-sm truncate">{art.title}</h4>
+                            <span className="text-[10px] text-amber-400 font-semibold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                              {art.category} • 📍 {art.location}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Order Controls & Actions */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => {
+                              const currentArt = art;
+                              const prevArt = arr[idx - 1];
+                              const updatedList = articlesList.map(a => {
+                                if (a.id === currentArt.id) return { ...a, slideshowOrder: idx };
+                                if (a.id === prevArt.id) return { ...a, slideshowOrder: idx + 1 };
+                                return a;
+                              });
+                              if (onUpdateArticlesList) onUpdateArticlesList(updatedList);
+                            }}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 disabled:opacity-30 rounded-lg border border-slate-800 font-bold transition-colors cursor-pointer"
+                            title="क्रम ऊपर करें"
+                          >
+                            ▲ ऊपर
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={idx === arr.length - 1}
+                            onClick={() => {
+                              const currentArt = art;
+                              const nextArt = arr[idx + 1];
+                              const updatedList = articlesList.map(a => {
+                                if (a.id === currentArt.id) return { ...a, slideshowOrder: idx + 2 };
+                                if (a.id === nextArt.id) return { ...a, slideshowOrder: idx + 1 };
+                                return a;
+                              });
+                              if (onUpdateArticlesList) onUpdateArticlesList(updatedList);
+                            }}
+                            className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 disabled:opacity-30 rounded-lg border border-slate-800 font-bold transition-colors cursor-pointer"
+                            title="क्रम नीचे करें"
+                          >
+                            ▼ नीचे
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = { ...art, isTopStory: false, slideshowOrder: 0 };
+                              if (onUpdateArticle) onUpdateArticle(updated);
+                            }}
+                            className="px-2.5 py-1.5 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg border border-red-800 font-semibold transition-colors cursor-pointer"
+                          >
+                            हटाएं
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Image Edit Row for this slide */}
+                      <div className="pt-2 border-t border-slate-900 flex flex-wrap items-center gap-3">
+                        <span className="text-slate-400 text-[11px] font-semibold">फोटो बदलें:</span>
+                        <input
+                          type="text"
+                          value={art.imageUrl}
+                          onChange={(e) => {
+                            if (onUpdateArticle) {
+                              onUpdateArticle({ ...art, imageUrl: e.target.value });
+                            }
+                          }}
+                          placeholder="तस्वीर का वेब लिंक दर्ज करें..."
+                          className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 text-xs outline-none focus:border-purple-500"
+                        />
+                        <label className="bg-slate-900 hover:bg-slate-800 text-purple-300 px-3 py-1.5 rounded-lg border border-slate-800 font-semibold cursor-pointer text-xs">
+                          फोटो अपलोड करें
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  if (onUpdateArticle) {
+                                    onUpdateArticle({ ...art, imageUrl: reader.result as string });
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Add Available Articles to Slideshow */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 pt-4">
+                <h3 className="font-bold text-sm text-white">अन्य उपलब्ध ख़बरों को स्लाइडशो में जोड़ें:</h3>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {articlesList
+                    .filter(a => !a.isTopStory && (!a.slideshowOrder || a.slideshowOrder <= 0))
+                    .map(art => (
+                      <div key={art.id} className="flex items-center justify-between p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-xs">
+                        <div className="flex items-center gap-3 truncate">
+                          <img src={art.imageUrl} alt="" className="w-10 h-8 rounded object-cover shrink-0" />
+                          <span className="font-semibold text-slate-200 truncate">{art.title}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = {
+                              ...art,
+                              isTopStory: true,
+                              slideshowOrder: articlesList.filter(a => a.isTopStory).length + 1
+                            };
+                            if (onUpdateArticle) onUpdateArticle(updated);
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded-md shrink-0 cursor-pointer text-[11px]"
+                        >
+                          + स्लाइडशो में शामिल करें
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
           )}
 
           {/* 4. STATES & DISTRICTS DYNAMIC MANAGER TAB */}

@@ -54,6 +54,7 @@ export interface NewsArticle {
   isOpinion?: boolean;
   isVideo?: boolean;
   isPhotoGallery?: boolean;
+  slideshowOrder?: number;
   tags: string[];
   location: string;
   videoUrl?: string;

@@ -10,7 +10,15 @@ interface HeroCarouselProps {
 export const HeroCarousel: React.FC<HeroCarouselProps> = ({ articles, onSelectArticle }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const heroArticles = articles.filter((a) => a.isTopStory || a.isBreaking || a.isEditorsPick).slice(0, 5);
+  const heroArticles = articles
+    .filter((a) => a.isTopStory || a.isBreaking || a.isEditorsPick || (a.slideshowOrder !== undefined && a.slideshowOrder > 0))
+    .sort((a, b) => {
+      const orderA = a.slideshowOrder !== undefined && a.slideshowOrder > 0 ? a.slideshowOrder : 9999;
+      const orderB = b.slideshowOrder !== undefined && b.slideshowOrder > 0 ? b.slideshowOrder : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    })
+    .slice(0, 8);
 
   useEffect(() => {
     if (heroArticles.length === 0) return;

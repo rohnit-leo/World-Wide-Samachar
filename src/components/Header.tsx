@@ -100,20 +100,9 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="bg-[#222222] text-white text-[10px] py-1 px-4 flex justify-between items-center z-50">
         <div className="flex items-center gap-3 sm:gap-4">
           <span>{currentDateHi}</span>
-          <a
-            href="https://chat.whatsapp.com/invite"
-            target="_blank"
-            rel="noreferrer"
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-2 py-0.5 rounded text-[10px] flex items-center gap-1 transition-colors shadow-2xs"
-            title="व्हाट्सएप ग्रुप ज्वाइन करें"
-          >
-            <MessageCircle className="w-3 h-3 fill-white" />
-            <span className="hidden sm:inline">WhatsApp ग्रुप ज्वाइन करें</span>
-            <span className="sm:hidden">WhatsApp</span>
-          </a>
           <button
             onClick={onOpenLiveTV}
-            className="hidden sm:flex items-center gap-1 hover:text-[#C60000] transition-colors cursor-pointer"
+            className="flex items-center gap-1 hover:text-[#C60000] transition-colors cursor-pointer"
           >
             <span className="w-2 h-2 bg-[#C60000] rounded-full animate-pulse"></span>
             <span>लाइव टीवी</span>
@@ -132,16 +121,6 @@ export const Header: React.FC<HeaderProps> = ({
           <button onClick={() => onOpenAuth('register')} className="hover:text-amber-300 transition-colors cursor-pointer">
             रजिस्टर
           </button>
-          <div className="flex gap-2 ml-1 sm:ml-2">
-            <button
-              onClick={() => onNavigate('admin')}
-              className="bg-[#C60000] text-white text-[10px] sm:text-[11px] px-2.5 py-1 rounded-md font-extrabold hover:bg-red-700 transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
-              title="एडमिन सीएमएस (CMS Panel)"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-yellow-300" />
-              <span>एडमिन पैनल</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -182,16 +161,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             खबर भेजें
           </button>
-
-          <a
-            href="https://chat.whatsapp.com/invite"
-            target="_blank"
-            rel="noreferrer"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 shadow-sm"
-          >
-            <MessageCircle className="w-4 h-4 fill-white" />
-            <span className="hidden sm:inline">WhatsApp ज्वाइन</span>
-          </a>
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -301,19 +270,6 @@ export const Header: React.FC<HeaderProps> = ({
                   {cat.label}
                 </button>
               ))}
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-[#E5E5E5]">
-              <button
-                onClick={() => {
-                  onNavigate('admin');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full bg-[#C60000] text-white p-2.5 rounded-lg font-bold flex items-center justify-center gap-2 shadow-xs text-xs"
-              >
-                <ShieldCheck className="w-4 h-4 text-yellow-300" />
-                <span>एडमिन सीएमएस पैनल (Admin Panel)</span>
-              </button>
             </div>
           </div>
         )}

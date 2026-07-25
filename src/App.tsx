@@ -29,6 +29,11 @@ import { STATES_DATA } from './data/statesData';
 import { NewsArticle, CategoryType, ViewPage, SubmittedNews, StateInfo } from './types';
 import { ChevronRight, ArrowRight, Layers } from 'lucide-react';
 
+// Chronological Sorting Helper (Newest First)
+const sortArticlesByNewest = (list: NewsArticle[]) => {
+  return [...list].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+};
+
 export const App: React.FC = () => {
   // Requirement 1: Open directly on home page without loading screen
   const [isLoading, setIsLoading] = useState(false);
@@ -36,18 +41,39 @@ export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<ViewPage>('home');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
 
+  // Requirement: Admin Panel accessed via URL /admin
+  useEffect(() => {
+    const checkAdminPath = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === '/admin' || path.endsWith('/admin') || hash === '#admin') {
+        setCurrentPage('admin');
+      }
+    };
+
+    checkAdminPath();
+
+    window.addEventListener('popstate', checkAdminPath);
+    window.addEventListener('hashchange', checkAdminPath);
+
+    return () => {
+      window.removeEventListener('popstate', checkAdminPath);
+      window.removeEventListener('hashchange', checkAdminPath);
+    };
+  }, []);
+
   // Dynamic Global Realtime Data State
   const [articles, setArticles] = useState<NewsArticle[]>(() => {
     try {
       const saved = localStorage.getItem('wws_articles_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return sortArticlesByNewest(parsed);
       }
     } catch (e) {
       console.error('Error loading articles from storage:', e);
     }
-    return ALL_NEWS_ARTICLES;
+    return sortArticlesByNewest(ALL_NEWS_ARTICLES);
   });
 
   const [submittedNews, setSubmittedNews] = useState<SubmittedNews[]>(() => {
@@ -125,7 +151,11 @@ export const App: React.FC = () => {
 
   // Real-Time Handler Functions for Admin & User Actions
   const handleAddArticle = (newArt: NewsArticle) => {
-    setArticles(prev => [newArt, ...prev]);
+    const artWithTimestamp: NewsArticle = {
+      ...newArt,
+      publishedAt: newArt.publishedAt || new Date().toISOString()
+    };
+    setArticles(prev => sortArticlesByNewest([artWithTimestamp, ...prev]));
   };
 
   const handleUpdateArticle = (updatedArt: NewsArticle) => {
@@ -193,7 +223,7 @@ export const App: React.FC = () => {
       tags: [submission.category, submission.location, 'यूज़र रिपोर्ट']
     };
 
-    setArticles(prev => [newArt, ...prev]);
+    setArticles(prev => sortArticlesByNewest([newArt, ...prev]));
     setSubmittedNews(prev => prev.map(item => item.id === submission.id ? { ...item, status: 'approved' } : item));
   };
 
@@ -211,7 +241,7 @@ export const App: React.FC = () => {
 
   const handleResetDefaults = () => {
     if (confirm('क्या आप निश्चित रूप से पोर्टल का पूरा डेटा डिफ़ॉल्ट स्थिति में रीसेट करना चाहते हैं?')) {
-      setArticles(ALL_NEWS_ARTICLES);
+      setArticles(sortArticlesByNewest(ALL_NEWS_ARTICLES));
       setSubmittedNews(INITIAL_SUBMITTED_NEWS);
       setTickers(BREAKING_NEWS_TICKERS.ticker1);
       setStatesList(STATES_DATA);
@@ -240,6 +270,9 @@ export const App: React.FC = () => {
   };
 
   const handleNavigatePage = (page: ViewPage) => {
+    if (page === 'admin') {
+      window.history.pushState({}, '', '/admin');
+    }
     setCurrentPage(page);
     setSelectedArticle(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -249,10 +282,16 @@ export const App: React.FC = () => {
   if (currentPage === 'admin') {
     return (
       <AdminPanel
-        onBackToPortal={() => setCurrentPage('home')}
+        onBackToPortal={() => {
+          if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+            window.history.pushState({}, '', '/');
+          }
+          setCurrentPage('home');
+        }}
         articlesList={articles}
         onAddArticle={handleAddArticle}
         onUpdateArticle={handleUpdateArticle}
+        onUpdateArticlesList={(updatedList) => setArticles(sortArticlesByNewest(updatedList))}
         onDeleteArticle={handleDeleteArticle}
         submittedList={submittedNews}
         onApproveSubmission={handleApproveSubmission}
