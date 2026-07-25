@@ -123,6 +123,19 @@ export interface CommentItem {
   likes: number;
 }
 
+export interface SubmittedNews {
+  id: string;
+  name: string;
+  mobile: string;
+  email?: string;
+  location: string;
+  category: CategoryType;
+  headline: string;
+  description: string;
+  submittedAt: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 export type ViewPage = 
   | 'home'
   | 'article'
