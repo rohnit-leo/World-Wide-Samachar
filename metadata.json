@@ -1,0 +1,6 @@
+{
+  "name": "World Wide Samachar",
+  "description": "वर्ल्ड वाइड समाचार (World Wide Samachar) - भारत और दुनिया की ताज़ा हिंदी ख़बरें, राजनीति, खेल, मनोरंजन, व्यापार और राज्य समाचार।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
