@@ -1,0 +1,38 @@
+{
+  "collections": {
+    "articles": {
+      "type": "document",
+      "fields": {
+        "title": "string",
+        "summary": "string",
+        "content": "string",
+        "imageUrl": "string",
+        "category": "string",
+        "publishedAt": "string",
+        "author": "string",
+        "location": "string",
+        "source": "string",
+        "isTopStory": "boolean",
+        "slideshowOrder": "number",
+        "createdAt": "timestamp"
+      }
+    },
+    "tickers": {
+      "type": "document",
+      "fields": {
+        "text": "string",
+        "createdAt": "timestamp"
+      }
+    },
+    "states": {
+      "type": "document",
+      "fields": {
+        "id": "string",
+        "name": "string",
+        "hindiName": "string",
+        "active": "boolean",
+        "order": "number"
+      }
+    }
+  }
+}

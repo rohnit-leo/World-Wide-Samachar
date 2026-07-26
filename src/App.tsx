@@ -30,6 +30,10 @@ import { STATES_DATA } from './data/statesData';
 import { NewsArticle, CategoryType, ViewPage, SubmittedNews, StateInfo } from './types';
 import { ChevronRight, ArrowRight, Layers } from 'lucide-react';
 
+import { db, auth } from './lib/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from 'firebase/firestore';
+
 // Chronological Sorting Helper (Newest First)
 const sortArticlesByNewest = (list: NewsArticle[]) => {
   return [...list].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
@@ -41,6 +45,13 @@ export const App: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryType>('होम');
   const [currentPage, setCurrentPage] = useState<ViewPage>('home');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+
+  // Authenticate anonymously
+  useEffect(() => {
+    signInAnonymously(auth).catch((error) => {
+      console.error("Auth error:", error);
+    });
+  }, []);
 
   // Requirement: Admin Panel accessed via URL /admin
   useEffect(() => {
@@ -73,110 +84,97 @@ export const App: React.FC = () => {
   }, []);
 
   // Dynamic Global Realtime Data State
-  const [articles, setArticles] = useState<NewsArticle[]>(() => {
-    try {
-      const saved = localStorage.getItem('wws_articles_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return sortArticlesByNewest(parsed);
-      }
-    } catch (e) {
-      console.error('Error loading articles from storage:', e);
-    }
-    return sortArticlesByNewest(ALL_NEWS_ARTICLES);
-  });
+  const [articles, setArticles] = useState<NewsArticle[]>(sortArticlesByNewest(ALL_NEWS_ARTICLES));
+  const [submittedNews, setSubmittedNews] = useState<SubmittedNews[]>(INITIAL_SUBMITTED_NEWS);
+  const [tickers, setTickers] = useState<string[]>(BREAKING_NEWS_TICKERS.ticker1);
+  const [statesList, setStatesList] = useState<StateInfo[]>(STATES_DATA);
 
-  const [submittedNews, setSubmittedNews] = useState<SubmittedNews[]>(() => {
-    try {
-      const saved = localStorage.getItem('wws_submitted_news_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading submitted news from storage:', e);
-    }
-    return INITIAL_SUBMITTED_NEWS;
-  });
-
-  const [tickers, setTickers] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('wws_tickers_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading tickers from storage:', e);
-    }
-    return BREAKING_NEWS_TICKERS.ticker1;
-  });
-
-  // Realtime States & Districts Data State
-  const [statesList, setStatesList] = useState<StateInfo[]>(() => {
-    try {
-      const saved = localStorage.getItem('wws_states_data_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading states data:', e);
-    }
-    return STATES_DATA;
-  });
-
-  // Auto-Save Persistence
+  // Firestore Real-time Subscriptions
   useEffect(() => {
-    try {
-      localStorage.setItem('wws_articles_v3', JSON.stringify(articles));
-    } catch (e) {
-      console.error('Failed to save articles', e);
-    }
-  }, [articles]);
+    let isArticlesInit = false;
+    const unsubArticles = onSnapshot(collection(db, 'articles'), async (snapshot) => {
+      if (snapshot.empty && !isArticlesInit) {
+        isArticlesInit = true;
+        try {
+          const batch = writeBatch(db);
+          ALL_NEWS_ARTICLES.forEach(art => {
+            batch.set(doc(db, 'articles', art.id), art);
+          });
+          await batch.commit();
+        } catch (e) {
+          console.error("Seeding articles error:", e);
+        }
+      } else if (!snapshot.empty) {
+        const fetchedArticles = snapshot.docs.map(doc => doc.data() as NewsArticle);
+        setArticles(sortArticlesByNewest(fetchedArticles));
+      }
+    });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('wws_submitted_news_v3', JSON.stringify(submittedNews));
-    } catch (e) {
-      console.error('Failed to save submitted news', e);
-    }
-  }, [submittedNews]);
+    let isTickersInit = false;
+    const unsubTickers = onSnapshot(doc(db, 'config', 'tickers'), async (docSnap) => {
+      if (!docSnap.exists() && !isTickersInit) {
+        isTickersInit = true;
+        try {
+          await setDoc(doc(db, 'config', 'tickers'), { list: BREAKING_NEWS_TICKERS.ticker1 });
+        } catch (e) {}
+      } else if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.list) setTickers(data.list);
+      }
+    });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('wws_tickers_v3', JSON.stringify(tickers));
-    } catch (e) {
-      console.error('Failed to save tickers', e);
-    }
-  }, [tickers]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('wws_states_data_v1', JSON.stringify(statesList));
-    } catch (e) {
-      console.error('Failed to save states data', e);
-    }
-  }, [statesList]);
+    let isStatesInit = false;
+    const unsubStates = onSnapshot(doc(db, 'config', 'states'), async (docSnap) => {
+      if (!docSnap.exists() && !isStatesInit) {
+        isStatesInit = true;
+        try {
+          await setDoc(doc(db, 'config', 'states'), { list: STATES_DATA });
+        } catch (e) {}
+      } else if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.list) setStatesList(data.list);
+      }
+    });
+    
+    // We can also sync submitted news if needed, but skipping for now to save complexity
+    
+    return () => {
+      unsubArticles();
+      unsubTickers();
+      unsubStates();
+    };
+  }, []);
 
   // Real-Time Handler Functions for Admin & User Actions
-  const handleAddArticle = (newArt: NewsArticle) => {
+  const handleAddArticle = async (newArt: NewsArticle) => {
     const artWithTimestamp: NewsArticle = {
       ...newArt,
       publishedAt: newArt.publishedAt || new Date().toISOString()
     };
-    setArticles(prev => sortArticlesByNewest([artWithTimestamp, ...prev]));
+    try {
+      await setDoc(doc(db, 'articles', artWithTimestamp.id), artWithTimestamp);
+    } catch (e) {
+      console.error("Error adding article:", e);
+    }
   };
 
-  const handleUpdateArticle = (updatedArt: NewsArticle) => {
-    setArticles(prev => prev.map(a => a.id === updatedArt.id ? updatedArt : a));
+  const handleUpdateArticle = async (updatedArt: NewsArticle) => {
+    try {
+      await setDoc(doc(db, 'articles', updatedArt.id), updatedArt);
+    } catch (e) {
+      console.error("Error updating article:", e);
+    }
     if (selectedArticle && selectedArticle.id === updatedArt.id) {
       setSelectedArticle(updatedArt);
     }
   };
 
-  const handleDeleteArticle = (id: string) => {
-    setArticles(prev => prev.filter(a => a.id !== id));
+  const handleDeleteArticle = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'articles', id));
+    } catch (e) {
+      console.error("Error deleting article:", e);
+    }
     if (selectedArticle && selectedArticle.id === id) {
       setSelectedArticle(null);
     }
@@ -207,7 +205,7 @@ export const App: React.FC = () => {
     setSubmittedNews(prev => [newSub, ...prev]);
   };
 
-  const handleApproveSubmission = (submission: SubmittedNews) => {
+  const handleApproveSubmission = async (submission: SubmittedNews) => {
     const newArt: NewsArticle = {
       id: `art-sub-${Date.now()}`,
       title: submission.headline,
@@ -233,7 +231,11 @@ export const App: React.FC = () => {
       tags: [submission.category, submission.location, 'यूज़र रिपोर्ट']
     };
 
-    setArticles(prev => sortArticlesByNewest([newArt, ...prev]));
+    try {
+      await setDoc(doc(db, 'articles', newArt.id), newArt);
+    } catch (e) {
+      console.error(e);
+    }
     setSubmittedNews(prev => prev.map(item => item.id === submission.id ? { ...item, status: 'approved' } : item));
   };
 
@@ -241,12 +243,33 @@ export const App: React.FC = () => {
     setSubmittedNews(prev => prev.map(item => item.id === id ? { ...item, status: 'rejected' } : item));
   };
 
-  const handleAddTicker = (text: string) => {
-    setTickers(prev => [text, ...prev]);
+  const handleAddTicker = async (text: string) => {
+    const newTickers = [text, ...tickers];
+    setTickers(newTickers);
+    try {
+      await setDoc(doc(db, 'config', 'tickers'), { list: newTickers });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleDeleteTicker = (index: number) => {
-    setTickers(prev => prev.filter((_, i) => i !== index));
+  const handleDeleteTicker = async (index: number) => {
+    const newTickers = tickers.filter((_, i) => i !== index);
+    setTickers(newTickers);
+    try {
+      await setDoc(doc(db, 'config', 'tickers'), { list: newTickers });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleUpdateStatesList = async (newList: StateInfo[]) => {
+    setStatesList(newList);
+    try {
+      await setDoc(doc(db, 'config', 'states'), { list: newList });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleResetDefaults = () => {
@@ -301,7 +324,18 @@ export const App: React.FC = () => {
         articlesList={articles}
         onAddArticle={handleAddArticle}
         onUpdateArticle={handleUpdateArticle}
-        onUpdateArticlesList={(updatedList) => setArticles(sortArticlesByNewest(updatedList))}
+        onUpdateArticlesList={async (updatedList) => {
+          setArticles(sortArticlesByNewest(updatedList));
+          try {
+            const batch = writeBatch(db);
+            updatedList.forEach(art => {
+              batch.set(doc(db, 'articles', art.id), art);
+            });
+            await batch.commit();
+          } catch (e) {
+            console.error("Bulk update error:", e);
+          }
+        }}
         onDeleteArticle={handleDeleteArticle}
         submittedList={submittedNews}
         onApproveSubmission={handleApproveSubmission}
@@ -311,7 +345,7 @@ export const App: React.FC = () => {
         onDeleteTicker={handleDeleteTicker}
         onResetDefaults={handleResetDefaults}
         statesList={statesList}
-        onUpdateStatesList={setStatesList}
+        onUpdateStatesList={handleUpdateStatesList}
       />
     );
   }
